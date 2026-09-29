@@ -8,7 +8,7 @@ import java.util.Optional;
 
 public interface PacienteRepository extends JpaRepository< Paciente,Integer> {
 
-    Optional<Paciente> findByNome(String nome);
+    Optional<Paciente>findByNome(String nome);
 
     @Transactional
     void deleteByNome(String nome);

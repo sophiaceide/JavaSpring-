@@ -30,6 +30,6 @@ public class Paciente {
     private Integer duracaoDias;
 
     @Column(name = "doenca_cronica")
-    private String doencaCronica;
+    private Boolean doencaCronica;
 
 }

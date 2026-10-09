@@ -1,4 +1,4 @@
-package com.saude.cadastro_paciente.infrastructure;
+package com.saude.cadastro_paciente;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

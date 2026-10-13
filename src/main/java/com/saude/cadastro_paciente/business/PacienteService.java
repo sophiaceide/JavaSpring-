@@ -26,8 +26,12 @@ public class PacienteService {
                 () -> new RuntimeException("Nome não encontrado!") // roda no momento em que foi chamado
         );
     }
-    public void deletarPacientePorNome(String nome){
-        repository.deleteByNome(nome);
+    public void deletarPacientePorNome(String nome) {
+        long quantidade = repository.deleteByNome(nome);
+
+        if (quantidade == 0) {
+            throw new RuntimeException("Nome não encontrado!");
+        }
     }
 
     public void atualizarPacientePorId(Integer id, Paciente paciente) {

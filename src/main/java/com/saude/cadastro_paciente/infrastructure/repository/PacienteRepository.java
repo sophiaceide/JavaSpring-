@@ -11,7 +11,7 @@ public interface PacienteRepository extends JpaRepository< Paciente,Integer> {
     Optional<Paciente>findByNome(String nome);
 
     @Transactional
-    void deleteByNome(String nome);
+    long deleteByNome(String nome);
 
 
 }

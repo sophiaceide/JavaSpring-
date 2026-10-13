@@ -33,10 +33,12 @@ public class PacienteController {
     }
 
     @PutMapping
-    public ResponseEntity<Void> atualizarPacientePorNome(@RequestParam Paciente paciente,Integer id){
+    public ResponseEntity<Void> atualizarPacientePorNome(
+            @RequestBody Paciente paciente,
+            @RequestParam Integer id) {
+
         pacienteService.atualizarPacientePorId(id, paciente);
         return ResponseEntity.ok().build();
     }
-
 
 }

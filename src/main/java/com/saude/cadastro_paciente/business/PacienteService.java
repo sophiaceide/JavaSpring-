@@ -4,10 +4,10 @@ import com.saude.cadastro_paciente.infrastructure.entitys.Paciente;
 import com.saude.cadastro_paciente.infrastructure.repository.PacienteRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
-
 public class PacienteService {
 
     private final PacienteRepository repository;
@@ -16,18 +16,60 @@ public class PacienteService {
         this.repository = repository;
     }
 
-    public void salvarPaciente(Paciente paciente){
-        repository.saveAndFlush(paciente);
+    public Paciente salvarPaciente(Paciente paciente){
+        return repository.saveAndFlush(paciente);
+    }
+
+    public List<Paciente> listarTodos() {
+        return repository.findAll();
     }
 
     public Paciente buscarPacientePorNome(String nome){
+        if (nome == null || nome.trim().isEmpty()) {
+            throw new RuntimeException("Nome não informado!");
+        }
+        String nomeFormatado = nome.trim();
 
-        return repository.findByNome(nome).orElseThrow(
-                () -> new RuntimeException("Nome não encontrado!") // roda no momento em que foi chamado
-        );
+        // 1. Tenta correspondência exata
+        // 2. Tenta ignorando maiúsculas e minúsculas
+        // 3. Tenta por primeiro nome ou parte do nome (ex: "Carlos" acha "Carlos Alberto")
+        return repository.findByNome(nomeFormatado)
+                .or(() -> repository.findFirstByNomeIgnoreCase(nomeFormatado))
+                .or(() -> repository.findFirstByNomeContainingIgnoreCase(nomeFormatado))
+                .orElseThrow(() -> new RuntimeException("Nome não encontrado!"));
     }
+
+    public List<Paciente> buscarPacientesPorNome(String nome) {
+        if (nome == null || nome.trim().isEmpty()) {
+            return repository.findAll();
+        }
+        String nomeFormatado = nome.trim();
+        List<Paciente> encontrados = repository.findByNomeContainingIgnoreCase(nomeFormatado);
+        if (encontrados.isEmpty()) {
+            repository.findByNome(nomeFormatado).ifPresent(encontrados::add);
+        }
+        return encontrados;
+    }
+
     public void deletarPacientePorNome(String nome) {
-        long quantidade = repository.deleteByNome(nome);
+        if (nome == null || nome.trim().isEmpty()) {
+            throw new RuntimeException("Nome não informado!");
+        }
+        String nomeFormatado = nome.trim();
+
+        long quantidade = repository.deleteByNome(nomeFormatado);
+
+        if (quantidade == 0) {
+            quantidade = repository.deleteByNomeIgnoreCase(nomeFormatado);
+        }
+
+        if (quantidade == 0) {
+            List<Paciente> encontrados = repository.findByNomeContainingIgnoreCase(nomeFormatado);
+            if (!encontrados.isEmpty()) {
+                repository.delete(encontrados.get(0));
+                quantidade = 1;
+            }
+        }
 
         if (quantidade == 0) {
             throw new RuntimeException("Nome não encontrado!");
@@ -35,22 +77,18 @@ public class PacienteService {
     }
 
     public void atualizarPacientePorId(Integer id, Paciente paciente) {
+        Paciente pacienteEntity = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Paciente não encontrado"));
 
-        Paciente pacienteEntity = repository.findById(id)// procura no banco paciente com certo id
-                .orElseThrow(() -> new RuntimeException("Paciente não encontrado"));// tratar erro
-
-        Paciente pacienteAtualizado = Paciente.builder()// utiliza o builder e o lombok cria um metodo para construir o objeto campo por campo
-                .nome(paciente.getNome() != null ? paciente.getNome() : pacienteEntity.getNome())//Se o novo nome existir, usa o novo nome. Se não existir, mantém o nome antigo.
+        Paciente pacienteAtualizado = Paciente.builder()
+                .nome(paciente.getNome() != null ? paciente.getNome() : pacienteEntity.getNome())
                 .idade(paciente.getIdade() != null ? paciente.getIdade() : pacienteEntity.getIdade())
                 .sintoma(paciente.getSintoma() != null ? paciente.getSintoma() : pacienteEntity.getSintoma())
                 .duracaoDias(paciente.getDuracaoDias() != null ? paciente.getDuracaoDias() : pacienteEntity.getDuracaoDias())
                 .doencaCronica(paciente.getDoencaCronica() != null ? paciente.getDoencaCronica() : pacienteEntity.getDoencaCronica())
                 .id(pacienteEntity.getId())
-                .build();//finaliza o processo de construção iniciado pelo Builder e retorna o objeto Paciente com os atributos que foram definidos."
+                .build();
 
         repository.saveAndFlush(pacienteAtualizado);
     }
-
-//O Builder é um padrão que permite construir um objeto de forma organizada, definindo seus atributos individualmente
-
 }
